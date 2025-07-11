@@ -29,7 +29,8 @@ class PLNModel(nn.Module):
         )
 
         # ProposalNet outputs classification and regression heads
-        self.proposal_net = ProposalNet(in_channels=128, num_anchors=self.num_anchors)
+        self.cls_head = nn.Conv1d(128, self.num_anchors * 2, kernel_size=1)
+
 
     def forward(self, x):
         """
@@ -38,7 +39,6 @@ class PLNModel(nn.Module):
 
         Returns:
             cls_logits: (B, L * num_anchors, 2)
-            reg_outputs: (B, L * num_anchors, 2)
         """
         # 1. Embed input (B, L) -> (B, L, embedding_dim)
         x_emb = self.embedding(x)
@@ -50,10 +50,10 @@ class PLNModel(nn.Module):
         features = self.feature_extractor(x_emb)
 
         # 4. Proposal network (classification + regression)
-        cls_logits = self.proposal_net(features)
+        cls_logits = self.cls_head(features)
 
         # 5. Reshape outputs:
-        B, C, L = cls_logits.shape
+        B, _, L = cls_logits.shape
         # cls_logits shape (B, 2 * num_anchors, L) -> (B, L * num_anchors, 2)
         cls_logits = cls_logits.view(B, self.num_anchors, 2, L)
         cls_logits = cls_logits.permute(0, 3, 1, 2).contiguous()

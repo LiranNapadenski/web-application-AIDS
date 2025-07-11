@@ -10,6 +10,8 @@ class CharTokenizer:
 
         if text:
             self.build_vocab(text)
+        
+        self.vocab_size = len(self.char2idx)
 
     def build_vocab(self, text):
         unique_chars = sorted(set(text))

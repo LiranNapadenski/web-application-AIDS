@@ -22,7 +22,6 @@ class ProposalNet(nn.Module):
 
         Returns:
             cls_logits: (B, num_anchors * 2, L)
-            reg_outputs: (B, num_anchors * 2, L)
         """
         cls_logits = self.cls_head(x)
         return cls_logits
