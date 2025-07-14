@@ -7,10 +7,9 @@ from tqdm import tqdm
 import pandas as pd
 
 from PLNTrainer import train_pln
-from dumb_tokenizer import CharTokenizer          # Your CharTokenizer class
-from dataset import RequestsDataset          # Dataset using CharTokenizer
-from pln_model import PLNModel                    # PLNModel code
-from lossFunction import request_loss                 # Your request-level loss function
+from dumb_tokenizer import CharTokenizer         
+from dataset import RequestsDataset        
+from pln_model import PLNModel                                 
 
 def collate_fn(batch):
     seqs, masks, gt_boxes, labels = zip(*batch)

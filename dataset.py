@@ -3,12 +3,6 @@ from torch.utils.data import Dataset
 
 class RequestsDataset(Dataset):
     def __init__(self, dataframe, tokenizer, max_len=1024):
-        """
-        Args:
-            dataframe (pd.DataFrame): DataFrame with 'content' and 'classification' columns
-            tokenizer (CharTokenizer): your tokenizer instance
-            max_len (int): maximum sequence length (for padding/truncation)
-        """
         self.df = dataframe.reset_index(drop=True)
         self.tokenizer = tokenizer
         self.max_len = max_len

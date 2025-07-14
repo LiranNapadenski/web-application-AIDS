@@ -22,7 +22,6 @@ def train_pln(model,
         model.train()
         running_loss = 0.0
 
-        # inner progress bar over batches (optional; remove if too chatty)
         batch_bar = tqdm(dataloader,
                          desc=f"Epoch {epoch}",
                          unit="batch",

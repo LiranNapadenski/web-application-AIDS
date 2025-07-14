@@ -2,25 +2,16 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from proposal_net import ProposalNet
 
 class PLNModel(nn.Module):
     def __init__(self, vocab_size, embedding_dim, max_length, anchor_sizes):
-        """
-        Args:
-            vocab_size (int): Number of unique characters (vocab size)
-            embedding_dim (int): Size of embedding vectors (k)
-            max_length (int): Max input sequence length (Lmax)
-            anchor_sizes (list): List of anchor sizes (e.g. [4, 8, 16])
-        """
         super().__init__()
         self.embedding = nn.Embedding(vocab_size, embedding_dim, padding_idx=0)
         self.max_length = max_length
         self.anchor_sizes = anchor_sizes
         self.num_anchors = len(anchor_sizes)
 
-        # Simple feature extractor example - you can replace with your own
-        # Using Conv1d to keep spatial dimension (sequence length)
+        # Simple feature extractor
         self.feature_extractor = nn.Sequential(
             nn.Conv1d(embedding_dim, 128, kernel_size=3, padding=1),
             nn.ReLU(),
@@ -28,7 +19,6 @@ class PLNModel(nn.Module):
             nn.ReLU()
         )
 
-        # ProposalNet outputs classification and regression heads
         self.cls_head = nn.Conv1d(128, self.num_anchors * 2, kernel_size=1)
 
 
@@ -49,7 +39,7 @@ class PLNModel(nn.Module):
         # 3. Feature extractor: (B, embedding_dim, L) -> (B, 128, L)
         features = self.feature_extractor(x_emb)
 
-        # 4. Proposal network (classification + regression)
+        # 4. classification 
         cls_logits = self.cls_head(features)
 
         # 5. Reshape outputs:

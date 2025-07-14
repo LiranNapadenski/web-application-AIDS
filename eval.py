@@ -7,6 +7,7 @@ from dataset import RequestsDataset
 from dumb_tokenizer import CharTokenizer
 from pln_model import PLNModel
 from sklearn.metrics import precision_score, recall_score, f1_score
+from tqdm import tqdm
 
 def evaluate_pln(model, dataloader, device, tokenizer, max_samples):
     model.eval()
@@ -19,10 +20,14 @@ def evaluate_pln(model, dataloader, device, tokenizer, max_samples):
     correct_samples = []
     incorrect_samples = []
 
+    batch_bar = tqdm(enumerate(dataloader), total=len(dataloader), unit="batch", leave=False)
     with torch.no_grad():
-        for inputs, _, _, labels in dataloader:
+        for batch_idx, (inputs, _, _, labels) in batch_bar:
             inputs = inputs.to(device)
             labels = labels.to(device).long()
+            
+            batch_bar.set_description(f"Batch {batch_idx}")
+
 
             cls_logits = model(inputs)  # (B, L*A, 2)
             probs = F.softmax(cls_logits, dim=-1)
@@ -62,33 +67,19 @@ def evaluate_pln(model, dataloader, device, tokenizer, max_samples):
     recall = recall_score(all_labels, all_preds, zero_division=0)
     f1 = f1_score(all_labels, all_preds, zero_division=0)
 
-    print(f"\nAccuracy:  {accuracy:.4f}")
-    print(f"Precision: {precision:.4f}")
-    print(f"Recall:    {recall:.4f}")
-    print(f"F1 Score:  {f1:.4f}")
-
-    print("\nSample Correct Predictions:")
-    for sample in correct_samples:
-        print(f"Input: {sample['input']}")
-        print(f"True Label: {sample['true_label']} | Predicted: {sample['pred_label']}")
-        print("-----")
-
-    print("\nSample Incorrect Predictions:")
-    for sample in incorrect_samples:
-        print(f"Input: {sample['input']}")
-        print(f"True Label: {sample['true_label']} | Predicted: {sample['pred_label']}")
-        print("-----")
 
     return accuracy, precision, recall, f1, correct_samples, incorrect_samples
 
 if __name__ == "__main__":
 
     # Load dataset
-    csv_path = "CISC2010_cleaned.csv"
+    csv_path = "CISC2010_cleaned_test.csv"
     df = pd.read_csv(csv_path)
 
+    df_tok = pd.read_csv("CISC2010_cleaned_train.csv")
+
     # Build tokenizer vocab from all content
-    tokenizer = CharTokenizer("".join(df["content"].tolist()))
+    tokenizer = CharTokenizer("".join(df_tok["content"].tolist()))
 
     # Dataset + DataLoader
     dataset = RequestsDataset(df, tokenizer, max_len=1024)
@@ -105,9 +96,11 @@ if __name__ == "__main__":
 
     model = PLNModel(vocab_size, embedding_dim, max_length, anchor_sizes)
 
-    checkpoint = torch.load('checkpoints/pln_epoch_1000.pt', map_location=torch.device('cpu'))
+    checkpoint = torch.load('checkpoints/pln_epoch_800.pt', map_location=torch.device('cpu'))
 
     model.load_state_dict(checkpoint['model_state_dict'])
+
+    model.to(device)
 
     accuracy, precision, recall, f1, correct_samples, incorrect_samples = evaluate_pln(model, dataloader, device, tokenizer, 15)
     print("\n====== Final Evaluation Metrics ======")
